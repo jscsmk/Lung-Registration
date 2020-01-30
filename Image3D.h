@@ -36,9 +36,6 @@ public:
 	T* getBuffer();
 
 private:
-
-	// TODO : Add a member state about whether it's binary image or not
-
 	T* m_buffer;
 	unsigned m_width;
 	unsigned m_height;

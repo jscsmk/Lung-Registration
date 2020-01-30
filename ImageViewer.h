@@ -13,6 +13,7 @@ class ImageViewer : public QMainWindow {
 public:
 	ImageViewer(QWidget *parent = Q_NULLPTR);
 	~ImageViewer();
+
 private:
 	// UI related functions
 	Image3D<short>* GetReferenceImage() const;
@@ -26,7 +27,8 @@ private:
 	Registrator<short>* m_registrator;
 
 	void DepthChanged();
-	private slots:
+
+private slots:
 	void SharedShowMaskChanged();
 	void ReferenceShowMaskChanged();
 	void FloatShowMaskChanged();

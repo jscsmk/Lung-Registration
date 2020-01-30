@@ -215,11 +215,11 @@ void ImageViewer::SharedShowMaskChanged() {
 }
 
 void ImageViewer::ReferenceShowMaskChanged() {
-	RenderImageToView(m_ui.referenceView, GetReferenceImage(), m_ui.referenceSlider->value());
+	RenderImageToView(m_ui.referenceView, GetReferenceImage(), m_ui.referenceSlider->value(), m_ui.sharedShowMask->isChecked() || m_ui.referenceShowMask->isChecked() ? FOREGROUND : m_ui.windowSlider->value());
 }
 
 void ImageViewer::FloatShowMaskChanged() {
-	RenderImageToView(m_ui.floatView, GetFloatImage(), m_ui.floatSpinBox->value());
+	RenderImageToView(m_ui.floatView, GetFloatImage(), m_ui.floatSpinBox->value(), m_ui.sharedShowMask->isChecked() || m_ui.floatShowMask->isChecked() ? FOREGROUND : m_ui.windowSlider->value());
 }
 
 void ImageViewer::SharedSliderChanged() {
@@ -286,6 +286,6 @@ void ImageViewer::SubtractSpinboxChanged() {
 }
 
 void ImageViewer::WindowSliderChanged() {
-	RenderImageToView(m_ui.referenceView, GetReferenceImage(), m_ui.referenceSlider->value(), m_ui.windowSlider->value());
-	RenderImageToView(m_ui.floatView, GetFloatImage(), m_ui.floatSpinBox->value(), m_ui.windowSlider->value());
+	RenderImageToView(m_ui.referenceView, GetReferenceImage(), m_ui.referenceSlider->value(), m_ui.sharedShowMask->isChecked() || m_ui.referenceShowMask->isChecked() ? FOREGROUND : m_ui.windowSlider->value());
+	RenderImageToView(m_ui.floatView, GetFloatImage(), m_ui.floatSpinBox->value(), m_ui.sharedShowMask->isChecked() || m_ui.floatShowMask->isChecked() ? FOREGROUND : m_ui.windowSlider->value());
 }
