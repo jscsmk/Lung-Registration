@@ -9,6 +9,8 @@ namespace ImageUtility {
 	template <typename T>
 	Image3D<T>* Thresholding(Image3D<T>* image, T minimum, T maximum);
 	template <typename T>
+	void ConnectedComponentLabeling(Image3D<T> * mask);
+	template <typename T>
 	void FindEdge(Image3D<T>* image);
 	template <typename T>
 	Image3D<T>* CalculateChamferDistanceMap(Image3D<T>* image, int isothetic, int diagonal, int diagonal3D);
