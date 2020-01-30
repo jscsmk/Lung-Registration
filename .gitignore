@@ -1,0 +1,5 @@
+include/
+*vcxproj*
+*.raw
+*.qrc
+*.ui
