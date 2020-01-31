@@ -43,26 +43,16 @@ namespace ImageUtility {
 		H = (int)(mask->getHeight());
 		D = (int)(mask->getDepth());
 
-		// change all xy borders to FOREGROUND, thickness=3
+		// change all xy borders to FOREGROUND
 		#pragma omp parallel for
 		for (int k = 0; k < D; k++) {
 			for (int i = 0; i < W; i++) {
 				mask->getBuffer()[mask->get3DIndex(i, 0, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(i, 1, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(i, 2, k)] = FOREGROUND;
-
 				mask->getBuffer()[mask->get3DIndex(i, H - 1, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(i, H - 2, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(i, H - 3, k)] = FOREGROUND;
 			}
 			for (int j = 0; j < H; j++) {
 				mask->getBuffer()[mask->get3DIndex(0, j, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(1, j, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(2, j, k)] = FOREGROUND;
-
 				mask->getBuffer()[mask->get3DIndex(W - 1, j, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(W - 2, j, k)] = FOREGROUND;
-				mask->getBuffer()[mask->get3DIndex(W - 3, j, k)] = FOREGROUND;
 			}
 		}
 
