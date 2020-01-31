@@ -28,9 +28,10 @@ private:
 	glm::mat4 GetRotationMatrixAroundPoint(const glm::vec3& point, float degree, const glm::vec3& axis) const;
 
 	Image3D<T>* m_referenceImage;
-	Image3D<T>* m_floatImage;
-
 	Image3D<T>* m_referenceMask;
+	Image3D<T>* m_referenceDistanceMap;
+
+	Image3D<T>* m_floatImage;
 	Image3D<T>* m_floatMask;
 
 	Image3D<T>* m_subtractImage;

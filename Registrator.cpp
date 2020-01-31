@@ -38,24 +38,30 @@ Registrator<T>::~Registrator() {
 
 template <typename T>
 void Registrator<T>::Process() {
+	qDebug() << "### Processing reference image ###";
 	m_referenceImage->sliceInterpolate(5);
-	m_floatImage->sliceInterpolate(5);
-
+	m_referenceImage->calculateMinMax();
 	m_referenceMask = ImageUtility::CreateMask(m_referenceImage);
-	m_floatMask = ImageUtility::CreateMask(m_floatImage);
-
 	glm::vec3 referenceCenter = CalculateCenterOfMass(m_referenceMask);
-	glm::vec3 centerDifference = referenceCenter - CalculateCenterOfMass(m_floatMask);
-	// Initial Transform : Transform both image and mask to use same rotation center (aligned center of mass)
-	glm::mat4 transform = glm::translate(centerDifference);
-
-	ImageUtility::FindEdge(m_floatMask);
 	ImageUtility::FindEdge(m_referenceMask);
 
-	// TODO : calclulate distance map using reference mask
-	Image3D<T>* referenceDistanceMap = m_referenceMask;
+	m_referenceDistanceMap = ImageUtility::CalculateChamferDistanceMap(m_referenceMask, 3, 4, 5);
+	m_referenceDistanceMap->calculateMinMax();
+	m_referenceMask = m_referenceDistanceMap;
+	m_referenceMask->calculateMinMax(); // TODO: delete this
 
-	int currentDistance = CalculateTransformedDistance(referenceDistanceMap, m_floatMask, transform);
+	qDebug() << "\n### Processing float image ###";
+	m_floatImage->sliceInterpolate(5);
+	m_floatImage->calculateMinMax();
+	m_floatMask = ImageUtility::CreateMask(m_floatImage);
+	glm::vec3 floatCenter = CalculateCenterOfMass(m_floatMask);
+	ImageUtility::FindEdge(m_floatMask);
+
+	// Initial Transform : Transform both image and mask to use same rotation center (aligned center of mass)
+	glm::vec3 centerDifference = referenceCenter - floatCenter;
+	glm::mat4 transform = glm::translate(centerDifference);
+
+	//int currentDistance = CalculateTransformedDistance(referenceDistanceMap, m_floatMask, transform);
 
 	/*
 	TODO : optimize transform using distance map
@@ -64,15 +70,17 @@ void Registrator<T>::Process() {
 
 	// Apply final transform
 	TransformImage(m_floatMask, transform, BACKGROUND);
-	TransformImage(m_floatImage, transform, -1024);
-	m_subtractImage = ImageUtility::CalculateSubtractImage(m_referenceImage, m_floatImage);
+	TransformImage(m_floatImage, transform, m_floatImage->getMinMax().first);
 
-	m_referenceMask->calculateMinMax();
-	m_referenceImage->calculateMinMax();
-	m_floatMask->calculateMinMax();
-	m_floatImage->calculateMinMax();
-	m_subtractImage->calculateMinMax();
+	qDebug() << "\n### Processing subtract image ###";
+	m_subtractImage = ImageUtility::CalculateSubtractImage(m_referenceImage, m_floatImage);
+	m_subtractImage->setMinMax(-1024 + 400, -400 + 1024);
+	m_referenceImage->setMinMax(-1024, -400);
+	m_floatImage->setMinMax(-1024, -400);
+
+	qDebug() << "\n### Registration Complete ###\nnow starting image viewer...";
 }
+
 
 template <typename T>
 Image3D<T>* Registrator<T>::GetSubtractImage() {

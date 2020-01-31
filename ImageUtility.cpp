@@ -223,6 +223,84 @@ namespace ImageUtility {
 
 
 	template <typename T>
+	Image3D<T>* CalculateChamferDistanceMap(Image3D<T>* image, int isothetic, int diagonal, int diagonal3D) {
+		int W, H, D, a, b, c;
+		W = (int)(image->getWidth());
+		H = (int)(image->getHeight());
+		D = (int)(image->getDepth());
+		a = isothetic;
+		b = diagonal;
+		c = diagonal3D;
+		const int neighborX[] = { -1,0,1, -1,0,1, -1,0,1, -1,0,1, -1,0 };
+		const int neighborY[] = { -1,-1,-1,	0,0,0, 1,1,1, -1,-1,-1, 0,0 };
+		const int neighborZ[] = { -1,-1,-1, -1,-1,-1, -1,-1,-1, 0,0,0, 0,0 };
+		const int neighborD[] = { c,b,c, b,a,b, c,b,c, b,a,b, a,0 }; // approximate version of euclidean dist
+		Image3D<T>* dist_map = new Image3D<T>(W + 2, H + 2, D + 2); // initialized to BACKGROUND
+
+		// first pass
+		for (int k = 1; k <= D; k++) {
+			for (int j = 1; j <= H; j++) {
+				for (int i = 1; i <= W; i++) {
+					int dist_idx = dist_map->get3DIndex(i, j, k);
+					int idx = image->get3DIndex(i - 1, j - 1, k - 1);
+					auto value = image->getBuffer()[idx];
+
+					if (value == EDGE) {
+						dist_map->getBuffer()[dist_idx] = 0;
+					}
+					else {
+						int min_dist = W + H + D; // any big value
+						for (int n = 0; n < 14; n++) {
+							int neighbor_idx = dist_map->get3DIndex(i + neighborX[n], j + neighborY[n], k + neighborZ[n]);
+							auto neighbor_val = dist_map->getBuffer()[neighbor_idx];
+							if (neighbor_val >= 0 && min_dist > neighbor_val + neighborD[n]) {
+								min_dist = neighbor_val + neighborD[n];
+							}
+						}
+
+						if (min_dist < W + H + D) {
+							dist_map->getBuffer()[dist_idx] = min_dist;
+						}
+					}
+				}
+			}
+		}
+
+		// second pass
+		Image3D<T>* dist_map_result = new Image3D<T>(W, H, D);
+		for (int k = D; k > 0; k--) {
+			for (int j = H; j > 0; j--) {
+				for (int i = W; i > 0; i--) {
+					int dist_idx = dist_map->get3DIndex(i, j, k);
+					int idx = image->get3DIndex(i - 1, j - 1, k - 1);
+					auto value = image->getBuffer()[idx];
+
+					if (value != EDGE) {
+						int min_dist = W + H + D; // any big value
+						for (int n = 0; n < 14; n++) {
+							int neighbor_idx = dist_map->get3DIndex(i - neighborX[n], j - neighborY[n], k - neighborZ[n]);
+							auto neighbor_val = dist_map->getBuffer()[neighbor_idx];
+							if (neighbor_val >= 0 && min_dist > neighbor_val + neighborD[n]) {
+								min_dist = neighbor_val + neighborD[n];
+							}
+						}
+
+						if (min_dist < W + H + D) {
+							dist_map->getBuffer()[dist_idx] = min_dist;
+						}
+					}
+
+					dist_map_result->getBuffer()[idx] = dist_map->getBuffer()[dist_idx];
+				}
+			}
+		}
+
+		qDebug() << "chamfer distance map complete";
+		return dist_map_result;
+	}
+
+
+	template <typename T>
 	int CalculateDistance(Image3D<T> * distanceMap, Image3D<T> * binaryMask) {
 		std::vector<int> planeSum(binaryMask->getDepth(), 0);
 
