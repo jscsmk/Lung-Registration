@@ -3,8 +3,9 @@
 namespace ImageUtility {
 	template <typename T>
 	Image3D<T>* CreateMask(Image3D<T> * image) {
-		Image3D<T>* mask = new Image3D<T>(*image);
-		Thresholding<T>(mask, -1024, -400);
+		Image3D<T>* mask = new Image3D<T>(*image, false);
+		mask->setMinMax(BACKGROUND, EDGE);
+		Thresholding<T>(image, mask, -1024, -400);
 
 		/*
 		TODO :
@@ -19,17 +20,19 @@ namespace ImageUtility {
 
 
 	template <typename T>
-	Image3D<T>* Thresholding(Image3D<T> * image, T minimum, T maximum) {
-	#pragma omp parallel for
+	Image3D<T>* Thresholding(Image3D<T> *image, Image3D<T> *mask, T minimum, T maximum) {
+		#pragma omp parallel for
 		for (int i = 0; i < image->getBufferSize(); i++) {
 			auto value = image->getBuffer()[i];
 			if (value >= minimum  && value <= maximum) {
-				image->getBuffer()[i] = FOREGROUND;
+				mask->getBuffer()[i] = FOREGROUND;
 			}
 			else {
-				image->getBuffer()[i] = BACKGROUND;
+				mask->getBuffer()[i] = BACKGROUND;
 			}
 		}
+
+		qDebug() << "thresholding complete";
 	}
 
 
@@ -58,6 +61,7 @@ namespace ImageUtility {
 
 		// CCA first pass
 		Image3D<T>* cca_label = new Image3D<T>(W + 1, H + 1, D + 1);
+		cca_label->clear(BACKGROUND);
 		parent_list = new int[LIST_LEN];
 		component_size = new int[LIST_LEN];
 		node_count = 0;
@@ -173,6 +177,8 @@ namespace ImageUtility {
 				}
 			}
 		}
+
+		qDebug() << "CCL complete";
 	}
 
 
@@ -211,6 +217,8 @@ namespace ImageUtility {
 				}
 			}
 		}
+
+		qDebug() << "edge extraction complete";
 	}
 
 
@@ -256,6 +264,7 @@ namespace ImageUtility {
 			}
 		}
 
+		qDebug() << "subtraction complete";
 		return subtractedImage;
 	}
 }

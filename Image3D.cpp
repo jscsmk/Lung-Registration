@@ -25,23 +25,21 @@ template <typename T>
 Image3D<T>::Image3D(unsigned width, unsigned height, unsigned depth)
 	:m_width(width),
 	m_height(height),
-	m_depth(depth),
-	m_minmax(BACKGROUND, FOREGROUND) {
+	m_depth(depth) {
 	m_buffer = new T[getBufferSize()];
-#pragma omp parallel for
-	for (int i = 0; i < width*height*depth; i++) {
-		m_buffer[i] = BACKGROUND;
-	}
 }
 
 template <typename T>
-Image3D<T>::Image3D(const Image3D<T>& image3d)
+Image3D<T>::Image3D(const Image3D<T>& image3d, bool do_copy)
 	:m_width(image3d.m_width),
 	m_height(image3d.m_height),
-	m_depth(image3d.m_depth),
-	m_minmax(image3d.m_minmax) {
+	m_depth(image3d.m_depth) {
 	m_buffer = new T[image3d.getBufferSize()];
-	std::memcpy(m_buffer, image3d.m_buffer, getBufferLength());
+
+	if (do_copy) {
+		m_minmax = image3d.m_minmax;
+		std::memcpy(m_buffer, image3d.m_buffer, getBufferLength());
+	}
 }
 
 template <typename T>
@@ -186,6 +184,11 @@ void Image3D<T>::clear(T value) {
 		getBuffer()[i] = value;
 	}
 	m_minmax = std::make_pair(value, value);
+}
+
+template<typename T>
+void Image3D<T>::setMinMax(T min_val, T max_val) {
+	m_minmax = std::make_pair(min_val, max_val);
 }
 
 template<typename T>

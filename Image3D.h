@@ -15,7 +15,7 @@ class Image3D {
 public:
 	Image3D(T* buffer, unsigned width, unsigned height, unsigned depth, bool isLittleEndian);
 	Image3D(unsigned width, unsigned height, unsigned depth);
-	Image3D(const Image3D<T>& image3d);
+	Image3D(const Image3D<T>& image3d, bool do_copy=true);
 	~Image3D();
 
 	unsigned getBufferSize() const;
@@ -27,6 +27,7 @@ public:
 	unsigned getDepth() const;
 	void calculateMinMax();
 	std::pair<short, short> getMinMax();
+	void setMinMax(T min_val, T max_val);
 	void printImage(const std::string& path);
 	// RGBA 8888
 	unsigned char* getSliceAt(int z, T width, T level) const;
