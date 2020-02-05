@@ -47,8 +47,6 @@ void Registrator<T>::Process() {
 
 	m_referenceDistanceMap = ImageUtility::CalculateChamferDistanceMap(m_referenceMask, 3, 4, 5);
 	m_referenceDistanceMap->calculateMinMax();
-	m_referenceMask = m_referenceDistanceMap;
-	m_referenceMask->calculateMinMax(); // TODO: delete this
 
 	qDebug() << "\n### Processing float image ###";
 	m_floatImage->sliceInterpolate(5);
@@ -57,28 +55,82 @@ void Registrator<T>::Process() {
 	glm::vec3 floatCenter = CalculateCenterOfMass(m_floatMask);
 	ImageUtility::FindEdge(m_floatMask);
 
+	qDebug() << "\n### Optimizing Transform ###";
 	// Initial Transform : Transform both image and mask to use same rotation center (aligned center of mass)
 	glm::vec3 centerDifference = referenceCenter - floatCenter;
 	glm::mat4 transform = glm::translate(centerDifference);
+	int cur_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, transform);
+	glm::vec3 cur_center = referenceCenter;
 
-	//int currentDistance = CalculateTransformedDistance(referenceDistanceMap, m_floatMask, transform);
+	// optimize transform using distance map
+	int loop_idx = 0;
+	int min_count = 0;
+	float d = 5.0;
+	float r = 0.02;
+	glm::vec3 trans_vec_list[] = { glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(1.0, 0.0, 1.0) };
+	glm::mat4 l_transform, r_transform;
 
-	/*
-	TODO : optimize transform using distance map
-	ex) distance = CalculateTransformedDistance(referenceDistanceMap, m_floatMask, transform);
-	*/
+	while (true) {
+		qDebug() << "cur_dist:" << cur_distance;
+		if (min_count == 6) {
+			if (d < 0.1) {
+				break;
+			}
+
+			qDebug() << "step size decay" << cur_distance;
+			d /= 2;
+			r /= 2;
+			min_count = 0;
+		}
+
+		if (loop_idx < 3) {
+			l_transform = glm::translate(trans_vec_list[loop_idx] * +d);
+			r_transform = glm::translate(trans_vec_list[loop_idx] * -d);
+		}
+		else {
+			l_transform = glm::translate(cur_center * (float)1) * glm::rotate(+r, trans_vec_list[loop_idx - 3]) * glm::translate(cur_center * (float)-1);
+			r_transform = glm::translate(cur_center * (float)1) * glm::rotate(-r, trans_vec_list[loop_idx - 3]) * glm::translate(cur_center * (float)-1);
+		}
+		l_transform = l_transform * transform;
+		r_transform = r_transform * transform;
+
+		int l_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, l_transform);
+		int r_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, r_transform);
+
+		if (cur_distance < l_distance && cur_distance < r_distance) {
+			min_count++;
+		}
+		else {
+			if (l_distance < r_distance) {
+				transform = l_transform;
+				cur_distance = l_distance;
+			}
+			else {
+				transform = r_transform;
+				cur_distance = r_distance;
+			}
+
+			cur_center = glm::vec3(transform * glm::vec4(cur_center, 1.f));
+			min_count = 0;
+		}
+
+		loop_idx = (loop_idx + 1) % 6;
+	}
 
 	// Apply final transform
 	TransformImage(m_floatMask, transform, BACKGROUND);
 	TransformImage(m_floatImage, transform, m_floatImage->getMinMax().first);
+	qDebug() << "\n### Registration Complete ###";
+	qDebug() << "\nfinal distance:" << cur_distance;
 
+	// get subtracted image
 	qDebug() << "\n### Processing subtract image ###";
 	m_subtractImage = ImageUtility::CalculateSubtractImage(m_referenceImage, m_floatImage);
 	m_subtractImage->setMinMax(-1024 + 400, -400 + 1024);
 	m_referenceImage->setMinMax(-1024, -400);
 	m_floatImage->setMinMax(-1024, -400);
 
-	qDebug() << "\n### Registration Complete ###\nnow starting image viewer...";
+	qDebug() << "\nnow starting image viewer...";
 }
 
 

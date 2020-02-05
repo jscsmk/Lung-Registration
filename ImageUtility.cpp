@@ -6,13 +6,6 @@ namespace ImageUtility {
 		Image3D<T>* mask = new Image3D<T>(*image, false);
 		mask->setMinMax(BACKGROUND, EDGE);
 		Thresholding<T>(image, mask, -1024, -400);
-
-		/*
-		TODO :
-		Connected Component Labeling
-		Create Largest Set Mask
-		(FOREGROUND, BACKGROUND)
-		*/
 		ConnectedComponentLabeling<T>(mask);
 
 		return mask;
