@@ -6,6 +6,7 @@
 #include "Image3D.h"
 #include "FileHelper.h"
 #include "Registrator.h"
+#include <qdebug.h>
 
 class ImageViewer : public QMainWindow {
 	Q_OBJECT

@@ -6,7 +6,6 @@
 #include <vector>
 #include <algorithm>
 #include <omp.h>
-#include <qdebug.h>
 
 template <typename T>
 Registrator<T>::Registrator(Image3D<T> * referenceImage, Image3D<T> * floatImage)
@@ -77,7 +76,7 @@ void Registrator<T>::Process() {
 				break;
 			}
 
-			qDebug() << "step size decay" << cur_distance;
+			qDebug() << "step size decay";
 			d /= 2;
 			r /= 2;
 			min_count = 0;
@@ -121,7 +120,7 @@ void Registrator<T>::Process() {
 	TransformImage(m_floatMask, transform, BACKGROUND);
 	TransformImage(m_floatImage, transform, m_floatImage->getMinMax().first);
 	qDebug() << "\n### Registration Complete ###";
-	qDebug() << "\nfinal distance:" << cur_distance;
+	qDebug() << "final distance:" << cur_distance;
 
 	// get subtracted image
 	qDebug() << "\n### Processing subtract image ###";

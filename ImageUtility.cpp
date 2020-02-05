@@ -228,7 +228,8 @@ namespace ImageUtility {
 		const int neighborY[] = { -1,-1,-1,	0,0,0, 1,1,1, -1,-1,-1, 0,0 };
 		const int neighborZ[] = { -1,-1,-1, -1,-1,-1, -1,-1,-1, 0,0,0, 0,0 };
 		const int neighborD[] = { c,b,c, b,a,b, c,b,c, b,a,b, a,0 }; // approximate version of euclidean dist
-		Image3D<T>* dist_map = new Image3D<T>(W + 2, H + 2, D + 2); // initialized to BACKGROUND
+		Image3D<T>* dist_map = new Image3D<T>(W + 2, H + 2, D + 2);
+		dist_map->clear(BACKGROUND); // initialize to BACKGROUND
 
 		// first pass
 		for (int k = 1; k <= D; k++) {
