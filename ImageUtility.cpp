@@ -14,6 +14,8 @@ namespace ImageUtility {
 
 	template <typename T>
 	Image3D<T>* Thresholding(Image3D<T> *image, Image3D<T> *mask, T minimum, T maximum) {
+		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+
 		#pragma omp parallel for
 		for (int i = 0; i < image->getBufferSize(); i++) {
 			auto value = image->getBuffer()[i];
@@ -25,12 +27,14 @@ namespace ImageUtility {
 			}
 		}
 
-		qDebug() << "thresholding complete";
+		std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+		qDebug() << "thresholding complete -" << sec.count() << "secs";
 	}
 
 
 	template <typename T>
 	void ConnectedComponentLabeling(Image3D<T> * mask) {
+		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		const short LIST_LEN = 32767;
 		int *parent_list, *component_size;
 		int neighbor_idx[3];
@@ -171,12 +175,14 @@ namespace ImageUtility {
 			}
 		}
 
-		qDebug() << "CCL complete";
+		std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+		qDebug() << "CCL complete -" << sec.count() << "secs";
 	}
 
 
 	template <typename T>
 	void FindEdge(Image3D<T> * image) {
+		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		const int neighborX[] = { -1, 0, 1, 0 };
 		const int neighborY[] = { 0, -1, 0, 1 };
 
@@ -211,12 +217,14 @@ namespace ImageUtility {
 			}
 		}
 
-		qDebug() << "edge extraction complete";
+		std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+		qDebug() << "edge extraction complete -" << sec.count() << "secs";
 	}
 
 
 	template <typename T>
 	Image3D<T>* CalculateChamferDistanceMap(Image3D<T>* image, int isothetic, int diagonal, int diagonal3D) {
+		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		int W, H, D, a, b, c;
 		W = (int)(image->getWidth());
 		H = (int)(image->getHeight());
@@ -289,7 +297,8 @@ namespace ImageUtility {
 			}
 		}
 
-		qDebug() << "chamfer distance map complete";
+		std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+		qDebug() << "chamfer distance map complete -" << sec.count() << "secs";
 		return dist_map_result;
 	}
 
@@ -321,6 +330,7 @@ namespace ImageUtility {
 
 	template <typename T>
 	Image3D<T> * CalculateSubtractImage(Image3D<T> * lhs, Image3D<T> * rhs) {
+		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		Image3D<T>* subtractedImage = new Image3D<T>(*lhs);
 
 		int width = std::min(lhs->getWidth(), rhs->getWidth());
@@ -336,7 +346,8 @@ namespace ImageUtility {
 			}
 		}
 
-		qDebug() << "subtraction complete";
+		std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+		qDebug() << "subtraction complete -" << sec.count() << "secs";
 		return subtractedImage;
 	}
 }

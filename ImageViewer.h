@@ -7,6 +7,7 @@
 #include "FileHelper.h"
 #include "Registrator.h"
 #include <qdebug.h>
+#include <chrono>
 
 class ImageViewer : public QMainWindow {
 	Q_OBJECT

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <omp.h>
 
+
 template <typename T>
 Registrator<T>::Registrator(Image3D<T> * referenceImage, Image3D<T> * floatImage)
 	:m_referenceImage(referenceImage),
@@ -56,6 +57,7 @@ void Registrator<T>::Process() {
 
 	qDebug() << "\n### Optimizing Transform ###";
 	// Initial Transform : Transform both image and mask to use same rotation center (aligned center of mass)
+	std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 	glm::vec3 centerDifference = referenceCenter - floatCenter;
 	glm::mat4 transform = glm::translate(centerDifference);
 	int cur_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, transform);
@@ -70,13 +72,11 @@ void Registrator<T>::Process() {
 	glm::mat4 l_transform, r_transform;
 
 	while (true) {
-		qDebug() << "cur_dist:" << cur_distance;
 		if (min_count == 6) {
 			if (d < 0.1) {
 				break;
 			}
 
-			qDebug() << "step size decay";
 			d /= 2;
 			r /= 2;
 			min_count = 0;
@@ -119,7 +119,8 @@ void Registrator<T>::Process() {
 	// Apply final transform
 	TransformImage(m_floatMask, transform, BACKGROUND);
 	TransformImage(m_floatImage, transform, m_floatImage->getMinMax().first);
-	qDebug() << "\n### Registration Complete ###";
+	std::chrono::duration<double> sec = std::chrono::system_clock::now() - start_time;
+	qDebug() << "registration complete -" << sec.count() << "secs";
 	qDebug() << "final distance:" << cur_distance;
 
 	// get subtracted image
