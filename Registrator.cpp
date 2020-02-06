@@ -66,51 +66,48 @@ void Registrator<T>::Process() {
 	// optimize transform using distance map
 	int loop_idx = 0;
 	int min_count = 0;
-	float d = 5.0;
-	float r = 0.02;
-	glm::vec3 trans_vec_list[] = { glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(1.0, 0.0, 1.0) };
-	glm::mat4 l_transform, r_transform;
+	float d_list[] = { 1, 2, 3, 4, -1, -2, -3, -4 };
+	int dist_list[8];
+	float d = 0.5;
+	float r = 0.01;
+	glm::vec3 trans_vec_list[] = { glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0) };
+	glm::mat4 transform_list[8];
 
 	while (true) {
-		if (min_count == 6) {
-			if (d < 0.1) {
-				break;
+		if (min_count == 6)
+			break;
+
+		dist_list[0] = cur_distance;
+		transform_list[0] = transform;
+
+		#pragma omp parallel for
+		for (int i = 0; i < 8; i++) {
+			glm::mat4 new_transform = loop_idx < 3 ? \
+				glm::translate(trans_vec_list[loop_idx] * d_list[i] * d) : \
+				glm::translate(cur_center * (float)1) * glm::rotate(d_list[i] * r, trans_vec_list[loop_idx - 3]) * glm::translate(cur_center * (float)-1);
+
+			new_transform = new_transform * transform;
+			dist_list[i] = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, new_transform);
+			transform_list[i] = new_transform;
+		}
+
+		int min_dist = cur_distance;
+		int min_idx = -1;
+		for (int i = 0; i < 8; i++) {
+			if (min_dist > dist_list[i]) {
+				min_dist = dist_list[i];
+				min_idx = i;
 			}
-
-			d /= 2;
-			r /= 2;
-			min_count = 0;
 		}
 
-		if (loop_idx < 3) {
-			l_transform = glm::translate(trans_vec_list[loop_idx] * +d);
-			r_transform = glm::translate(trans_vec_list[loop_idx] * -d);
-		}
-		else {
-			l_transform = glm::translate(cur_center * (float)1) * glm::rotate(+r, trans_vec_list[loop_idx - 3]) * glm::translate(cur_center * (float)-1);
-			r_transform = glm::translate(cur_center * (float)1) * glm::rotate(-r, trans_vec_list[loop_idx - 3]) * glm::translate(cur_center * (float)-1);
-		}
-		l_transform = l_transform * transform;
-		r_transform = r_transform * transform;
-
-		int l_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, l_transform);
-		int r_distance = CalculateTransformedDistance(m_referenceDistanceMap, m_floatMask, r_transform);
-
-		if (cur_distance < l_distance && cur_distance < r_distance) {
+		if (min_idx == -1) {
 			min_count++;
 		}
 		else {
-			if (l_distance < r_distance) {
-				transform = l_transform;
-				cur_distance = l_distance;
-			}
-			else {
-				transform = r_transform;
-				cur_distance = r_distance;
-			}
-
-			cur_center = glm::vec3(transform * glm::vec4(cur_center, 1.f));
 			min_count = 0;
+			cur_distance = min_dist;
+			transform = transform_list[min_idx];
+			cur_center = glm::vec3(transform * glm::vec4(cur_center, 1.f));
 		}
 
 		loop_idx = (loop_idx + 1) % 6;
@@ -132,7 +129,6 @@ void Registrator<T>::Process() {
 
 	qDebug() << "\nnow starting image viewer...";
 }
-
 
 template <typename T>
 Image3D<T>* Registrator<T>::GetSubtractImage() {
